@@ -17,11 +17,18 @@ export async function GET(req: NextRequest) {
   const page = parseInt(url.searchParams.get('page') || '1')
   const limit = parseInt(url.searchParams.get('limit') || '10')
   const search = url.searchParams.get('search')?.toLowerCase() || ''
+  const role = url.searchParams.get('role') as string | null
 
-  const filteredUsers = users.filter((u) => u.firstName.toLowerCase().includes(search) || u.lastName.toLowerCase().includes(search) || u.email.toLowerCase().includes(search))
-
+  let filteredUsers = users.filter(
+    (u) =>
+      (u.firstName.toLowerCase().includes(search) ||
+        u.lastName.toLowerCase().includes(search) ||
+        u.email.toLowerCase().includes(search)) &&
+      (!role || role === 'all' || u.role === role)
+  )
   const start = (page - 1) * limit
   const paginatedUsers = filteredUsers.slice(start, start + limit)
+  
   return NextResponse.json({
    data: paginatedUsers,
    total: filteredUsers.length,

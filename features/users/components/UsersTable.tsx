@@ -21,7 +21,7 @@ const UserTable = () => {
   const limit = 5;
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading, isError } = useUsers(page, limit, debouncedSearch);
+  const { data, isLoading, isError } = useUsers(page, limit, debouncedSearch, filterRole);
   const updateUserMutation = useUpdateUser();
 
   const users = data?.users ?? [];
@@ -54,9 +54,14 @@ const UserTable = () => {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, filterRole]);
 
   useEffect(() => {
+    if (updateUserMutation.isPending) {
+      setShowPending(true);
+      const timer = setTimeout(() => setShowPending(false), 3000);
+      return () => clearTimeout(timer);
+    }
     if (updateUserMutation.isSuccess) {
       setShowSuccess(true);
       const timer = setTimeout(() => setShowSuccess(false), 3000);

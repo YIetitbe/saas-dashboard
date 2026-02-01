@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { User, UserSchema } from './types'
 
-export function useUsers(page = 1, limit = 10, search = '') {
+export function useUsers(page = 1, limit = 10, search = '', role: User['role'] | 'all' = 'all') {
   return useQuery({
-    queryKey: ['users', page, limit, search],
+    queryKey: ['users', page, limit, search, role],
     queryFn: async () => {
-      const res = await fetch(`/api/users?page=${page}&limit=${limit}&search=${search}`)
+      const res = await fetch(`/api/users?page=${page}&limit=${limit}&search=${search}&role=${role}`)
+
       if (!res.ok) throw new Error('Errore nel recupero utenti')
       const data = await res.json()
       return {
