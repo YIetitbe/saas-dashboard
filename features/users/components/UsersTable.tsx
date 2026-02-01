@@ -5,6 +5,7 @@ import { User } from "../types";
 import { useUpdateUser, useUsers } from "../hooks";
 import { useDebounce } from "@/shared/lib/debounce";
 import Table from "./Table";
+import UserCard from "./UserCard";
 
 const UserTable = () => {
   const currentUserRole: User["role"] = "admin";
@@ -21,7 +22,12 @@ const UserTable = () => {
   const limit = 5;
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading, isError } = useUsers(page, limit, debouncedSearch, filterRole);
+  const { data, isLoading, isError } = useUsers(
+    page,
+    limit,
+    debouncedSearch,
+    filterRole,
+  );
   const updateUserMutation = useUpdateUser();
 
   const users = data?.users ?? [];
@@ -81,7 +87,7 @@ const UserTable = () => {
   if (isError) return <p>Errore caricamento utenti</p>;
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
+    <div className="max-w-4xl mx-auto p-8 overflow-x-auto">
       <input
         ref={inputRef}
         type="text"
@@ -91,14 +97,14 @@ const UserTable = () => {
         className="border-2 border-green-500 p-1 rounded mb-2 w-full"
       />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="mr-2">Filtra per ruolo:</label>
         <select
           value={filterRole}
           onChange={(e) =>
             setFilterRole(e.target.value as User["role"] | "all")
           }
-          className="border-2 border-green-500 p-1 rounded disabled:opacity-50"
+          className="border-2 border-green-500 p-2 rounded w-full sm:w-auto"
           disabled={
             updateUserMutation.isPending ||
             (currentUserRole as User["role"]) !== "admin"
@@ -111,14 +117,31 @@ const UserTable = () => {
         </select>
       </div>
 
-      <Table
-        isLoading={isLoading}
-        users={filteredUsers}
-        handleRoleChange={handleRoleChange}
-        limit={limit}
-        updateUser={updateUser}
-        updateUserMutation={updateUserMutation}
-      />
+      {/* MOBILE */}
+      <div className="flex flex-col gap-4 sm:hidden">
+        {filteredUsers.map((u) => (
+          <UserCard
+            key={u.id}
+            user={u}
+            selectedRole={updateUser?.[0] === u.id ? updateUser[1] : undefined}
+            onRoleChange={handleRoleChange}
+            disabled={updateUserMutation.isPending}
+          />
+        ))}
+      </div>
+
+      {/* DESKTOP */}
+      <div className="hidden sm:block overflow-x-auto">
+        <Table
+          isLoading={isLoading}
+          users={filteredUsers}
+          handleRoleChange={handleRoleChange}
+          limit={limit}
+          updateUser={updateUser}
+          updateUserMutation={updateUserMutation}
+        />
+      </div>
+
       {(currentUserRole as User["role"]) === "admin" && updateUser && (
         <button
           className="mt-4 px-4 py-2 bg-green-500 text-white rounded disabled:opacity-50"
@@ -134,17 +157,16 @@ const UserTable = () => {
         <p className="mt-2 text-red-600">Errore durante l'aggiornamento.</p>
       )}
       {showSuccess && <p className="mt-2 text-green-600">Ruolo aggiornato!</p>}
-
-      <div className="mt-4 flex gap-4 justify-center">
+      <div className="mt-6 flex gap-6 justify-center">
         <button
-          className="border-2 border-green-500 p-2 rounded disabled:opacity-50"
+          className="border-2 border-green-500 px-4 py-3 rounded disabled:opacity-50"
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
         >
           Prev
         </button>
         <button
-          className="border-2 border-green-500 p-2 rounded disabled:opacity-50"
+          className="border-2 border-green-500 px-4 py-3 rounded disabled:opacity-50"
           disabled={page >= Math.ceil(total / limit)}
           onClick={() => setPage((p) => p + 1)}
         >
